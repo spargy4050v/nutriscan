@@ -1,4 +1,5 @@
 const express = require('express');
+const fetch = require('node-fetch');
 
 const app = express();
 app.use(express.json());
@@ -18,13 +19,6 @@ app.post('/scan', async (req, res) => {
         },
       }
     );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`OpenFoodFacts API error: ${response.status} ${response.statusText} - ${errorText}`);
-      return res.status(response.status).json({ error: `Failed to fetch product data: ${response.statusText}` });
-    }
-
     const data = await response.json();
 
     if (data.status === 0) {
@@ -33,13 +27,9 @@ app.post('/scan', async (req, res) => {
 
     res.json(data);
   } catch (err) {
-    console.error('API error:', err.message, err.stack);
-    res.status(500).json({ error: 'Internal server error. Please try again later.' });
+    console.error('API error:', err);
+    res.status(500).json({ error: 'Failed to fetch product data' });
   }
-});
-
-app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found' });
 });
 
 module.exports = app;
