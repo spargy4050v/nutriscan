@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,29 +9,57 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
+
 <body>
   <div class="container">
     <h1>NutriScan</h1>
     <p>Scan a food product barcode or upload a file to view nutritional information.</p>
-    
+
     <div class="video-wrapper">
       <video autoplay playsinline class="camera"></video>
     </div>
-    
+
     <div class="controls">
       <button id="scanButton">Scan Barcode</button>
       <button id="clearButton">Clear Results</button>
     </div>
-    
+
     <div class="file-upload">
       <label for="fileInput">Upload Barcode File (XLSX/CSV):</label>
       <input type="file" id="fileInput" accept=".xlsx,.csv">
     </div>
-    
+
     <div id="result">
       <p id="barcode">Waiting for scan...</p>
       <div id="loading" style="display: none;">Loading...</div>
       <div id="productInfo" class="product-info"></div>
+
+      <!-- AI Report Container (Hidden by default) -->
+      <div id="ai-report-container" class="ai-report"
+        style="display: none; margin-top: 20px; border-top: 1px solid #ccc; padding-top: 15px;">
+        <h3>🤖 AI Health Analysis</h3>
+        <p><strong>Summary:</strong> <span id="ai-summary"></span></p>
+
+        <div id="section-banned">
+          <h4>🚫 Banned/Risky Ingredients</h4>
+          <ul id="ai-banned" style="color: red;"></ul>
+        </div>
+
+        <div id="section-risks">
+          <h4>⚠️ Health Risks</h4>
+          <ul id="ai-risks"></ul>
+        </div>
+
+        <div id="section-limits">
+          <h4>📉 Safe Daily Limits</h4>
+          <ul id="ai-limits"></ul>
+        </div>
+
+        <div id="section-alternatives">
+          <h4>✅ Healthier Alternatives</h4>
+          <ul id="ai-alternatives" style="color: green;"></ul>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -68,4 +97,5 @@
 
   <script src="script.js"></script>
 </body>
+
 </html>
