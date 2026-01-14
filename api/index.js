@@ -1,8 +1,12 @@
 const express = require('express');
 const fetch = require('node-fetch');
+const { analyzeWithAI } = require('./ai');
 
 const app = express();
 app.use(express.json());
+
+const path = require('path');
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Log incoming requests
 app.use((req, res, next) => {
@@ -58,7 +62,23 @@ app.post('/api/scan', async (req, res) => {
     }
 
     console.log(`Successfully fetched product data for barcode ${barcode}`);
-    res.json(data);
+    console.log(`Successfully fetched product data for barcode ${barcode}`);
+
+    // AI Analysis
+    let aiReport = null;
+    try {
+      console.log('Starting AI analysis...');
+      aiReport = await analyzeWithAI(data.product);
+      console.log('AI analysis completed');
+    } catch (aiError) {
+      console.error('AI analysis failed:', aiError);
+      // We don't fail the whole request if AI fails, just return null for AI
+    }
+
+    res.json({
+      product: data.product,
+      ai: aiReport
+    });
   } catch (err) {
     console.error(`Error processing barcode ${barcode}:`, err.stack || err.message);
     res.status(500).json({ error: 'Failed to fetch product data', details: err.message });
@@ -77,3 +97,10 @@ app.use((err, req, res, next) => {
 });
 
 module.exports = app;
+
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}

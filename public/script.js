@@ -187,6 +187,50 @@ function displayProductInfo(productInfo, product = null, error = null) {
   `;
   productInfo.setAttribute('role', 'region');
   productInfo.setAttribute('aria-live', 'polite');
+  productInfo.setAttribute('aria-live', 'polite');
+}
+
+function displayAIInfo(productInfo, aiReport) {
+  const container = document.getElementById('ai-report-container');
+  if (!aiReport || !container) {
+    if (container) container.style.display = 'none';
+    return;
+  }
+
+  const { summary, banned_ingredients, risks, daily_limits, alternatives } = aiReport;
+
+  // Render Summary
+  const summaryEl = document.getElementById('ai-summary');
+  if (summaryEl) summaryEl.textContent = summary || 'No summary available.';
+
+  // Helper to render lists and toggle visibility
+  const renderList = (id, items, sectionId) => {
+    const el = document.getElementById(id);
+    const section = document.getElementById(sectionId);
+
+    if (!el || !section) return;
+
+    el.innerHTML = ''; // Clear previous content
+
+    if (Array.isArray(items) && items.length > 0) {
+      items.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = sanitize(String(item));
+        el.appendChild(li);
+      });
+      section.style.display = 'block'; // Show section if there is data
+    } else {
+      section.style.display = 'none'; // Hide section if empty
+    }
+  };
+
+  renderList('ai-banned', banned_ingredients, 'section-banned');
+  renderList('ai-risks', risks, 'section-risks');
+  renderList('ai-limits', daily_limits, 'section-limits');
+  renderList('ai-alternatives', alternatives, 'section-alternatives');
+
+  // Show the container
+  container.style.display = 'block';
 }
 
 // Display status messages
@@ -299,6 +343,9 @@ async function scanBarcode(video, barcodeText, productInfo, scanButton, loading,
 
     const data = await fetchProduct(barcodeValue, apiEndpoint);
     displayProductInfo(productInfo, data.product);
+    if (data.ai) {
+      displayAIInfo(productInfo, data.ai);
+    }
   } catch (err) {
     console.error('Scan error:', err);
     displayStatus(barcodeText, 'Scan failed. Try again.', true);
@@ -352,6 +399,9 @@ async function processFile(file, barcodeText, productInfo, loading, apiEndpoint 
 
       const data = await fetchProduct(barcodeValue, apiEndpoint);
       displayProductInfo(productInfo, data.product);
+      if (data.ai) {
+        displayAIInfo(productInfo, data.ai);
+      }
     };
 
     reader.onerror = () => {
@@ -402,7 +452,10 @@ function initBarcodeScanner() {
 
   clearButton.addEventListener('click', () => {
     displayStatus(barcodeText, 'Waiting for scan...');
+    displayStatus(barcodeText, 'Waiting for scan...');
     displayProductInfo(productInfo);
+    const aiContainer = document.getElementById('ai-report-container');
+    if (aiContainer) aiContainer.style.display = 'none';
     fileInput.value = '';
   });
 
