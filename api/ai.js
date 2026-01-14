@@ -1,13 +1,16 @@
 const fetch = require('node-fetch');
-const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
-
-const DIFY_API_KEY = process.env.DIFY_API_KEY;
-const DIFY_BASE_URL = process.env.DIFY_BASE_URL || 'https://api.dify.ai/v1';
 
 async function analyzeWithAI(product) {
+  // Read env vars at runtime, not at module load time
+  const DIFY_API_KEY = process.env.DIFY_API_KEY;
+  const DIFY_BASE_URL = process.env.DIFY_BASE_URL || 'https://api.dify.ai/v1';
+
+  // Debug log (remove after confirming it works)
+  console.log('DIFY_API_KEY exists:', !!DIFY_API_KEY);
+  console.log('DIFY_BASE_URL:', DIFY_BASE_URL);
+
   if (!DIFY_API_KEY) {
-    console.error('DIFY_API_KEY is missing');
+    console.error('DIFY_API_KEY is missing from environment variables');
     return null;
   }
 
@@ -50,7 +53,15 @@ async function analyzeWithAI(product) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Dify API error: ${response.status}`, errorText);
+      console.error(`Dify API error: Status ${response.status}`);
+      console.error('Dify error details:', errorText.substring(0, 500));
+      return null;
+    }
+
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('Dify returned non-JSON response:', text.substring(0, 500));
       return null;
     }
 
@@ -87,7 +98,8 @@ async function analyzeWithAI(product) {
         const cleanJson = aiRawData.replace(/```json/g, '').replace(/```/g, '').trim();
         aiReport = JSON.parse(cleanJson);
       } catch (e) {
-        console.error('Failed to parse AI output as JSON', e);
+        console.error('Failed to parse AI output as JSON. Error:', e.message);
+        console.error('Raw AI output (first 500 chars):', aiRawData.substring(0, 500));
         // Fallback: treat string as summary if parsing fails
         aiReport = { summary: aiRawData };
       }
