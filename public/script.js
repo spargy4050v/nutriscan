@@ -10,10 +10,14 @@ function calculateNutrientScores(nutriments) {
   const isZeroCalorie = totalKcal === 0; // Flag for zero-calorie products like water
 
   // Sugars (% energy)
-  const sugarsG = nutriments.sugars_100g || 0;
-  const sugarsKcal = sugarsG * 4; // 1g sugar = 4 kcal
+  const sugarsG = nutriments.sugars_100g;
+  const sugarsNAFlag = sugarsG === undefined || sugarsG === null;
+  const sugarsValue = sugarsNAFlag ? 0 : sugarsG;
+  const sugarsKcal = sugarsValue * 4; // 1g sugar = 4 kcal
   const sugarsPercentEnergy = totalKcal > 0 ? (sugarsKcal / totalKcal) * 100 : 0;
-  if (sugarsPercentEnergy <= 5) {
+  if (sugarsNAFlag) {
+    scores.sugars = 0; // Score 0 for N/A
+  } else if (sugarsPercentEnergy <= 5) {
     scores.sugars = 25;
   } else if (sugarsPercentEnergy <= 20) {
     scores.sugars = 25 - (sugarsPercentEnergy - 5) * (25 / 15); // Linear decrease to 0 at 20%
@@ -21,13 +25,17 @@ function calculateNutrientScores(nutriments) {
     scores.sugars = 0; // Beyond 20%, min score
   }
   scores.sugars = Math.min(Math.max(scores.sugars, 0), 25).toFixed(1);
-  scores.sugarsPercentEnergy = sugarsPercentEnergy.toFixed(1);
+  scores.sugarsPercentEnergy = sugarsNAFlag ? 'N/A' : sugarsPercentEnergy.toFixed(1);
 
   // Saturated Fat (% energy)
-  const satFatG = nutriments['saturated-fat_100g'] || 0;
-  const satFatKcal = satFatG * 9; // 1g fat = 9 kcal
+  const satFatG = nutriments['saturated-fat_100g'];
+  const satFatNAFlag = satFatG === undefined || satFatG === null;
+  const satFatValue = satFatNAFlag ? 0 : satFatG;
+  const satFatKcal = satFatValue * 9; // 1g fat = 9 kcal
   const satFatPercentEnergy = totalKcal > 0 ? (satFatKcal / totalKcal) * 100 : 0;
-  if (satFatPercentEnergy <= 5) {
+  if (satFatNAFlag) {
+    scores.satFat = 0; // Score 0 for N/A
+  } else if (satFatPercentEnergy <= 5) {
     scores.satFat = 25;
   } else if (satFatPercentEnergy <= 20) {
     scores.satFat = 25 - (satFatPercentEnergy - 5) * (5 / 3);
@@ -35,13 +43,17 @@ function calculateNutrientScores(nutriments) {
     scores.satFat = 0; // Beyond 20%, min score
   }
   scores.satFat = Math.min(Math.max(scores.satFat, 0), 25).toFixed(1);
-  scores.satFatPercentEnergy = satFatPercentEnergy.toFixed(1);
+  scores.satFatPercentEnergy = satFatNAFlag ? 'N/A' : satFatPercentEnergy.toFixed(1);
 
   // Trans Fat (% energy)
-  const transFatG = nutriments['trans-fat_100g'] || 0;
-  const transFatKcal = transFatG * 9; // 1g fat = 9 kcal
+  const transFatG = nutriments['trans-fat_100g'];
+  const transFatNAFlag = transFatG === undefined || transFatG === null;
+  const transFatValue = transFatNAFlag ? 0 : transFatG;
+  const transFatKcal = transFatValue * 9; // 1g fat = 9 kcal
   const transFatPercentEnergy = totalKcal > 0 ? (transFatKcal / totalKcal) * 100 : 0;
-  if (transFatPercentEnergy === 0) {
+  if (transFatNAFlag) {
+    scores.transFat = 0; // Score 0 for N/A
+  } else if (transFatPercentEnergy === 0) {
     scores.transFat = 25;
   } else if (transFatPercentEnergy <= 5) {
     scores.transFat = 25 - transFatPercentEnergy * 5;
@@ -49,12 +61,17 @@ function calculateNutrientScores(nutriments) {
     scores.transFat = 0; // Beyond 5%, min score
   }
   scores.transFat = Math.min(Math.max(scores.transFat, 0), 25).toFixed(1);
-  scores.transFatPercentEnergy = transFatPercentEnergy.toFixed(1);
+  scores.transFatPercentEnergy = transFatNAFlag ? 'N/A' : transFatPercentEnergy.toFixed(1);
 
   // Sodium (mg/kcal)
-  const sodiumMg = (nutriments.sodium_100g || 0) * 1000; // Convert g to mg
+  const sodiumG = nutriments.sodium_100g;
+  const sodiumNAFlag = sodiumG === undefined || sodiumG === null;
+  const sodiumValue = sodiumNAFlag ? 0 : sodiumG;
+  const sodiumMg = sodiumValue * 1000; // Convert g to mg
   const sodiumMgPerKcal = totalKcal > 0 ? sodiumMg / totalKcal : 0; // Handle zero energy
-  if (sodiumMgPerKcal <= 0.5) {
+  if (sodiumNAFlag) {
+    scores.sodium = 0; // Score 0 for N/A
+  } else if (sodiumMgPerKcal <= 0.5) {
     scores.sodium = 25;
   } else if (sodiumMgPerKcal <= 2) {
     scores.sodium = 25 - (sodiumMgPerKcal - 0.5) * (50 / 3);
@@ -62,24 +79,32 @@ function calculateNutrientScores(nutriments) {
     scores.sodium = 0; // Beyond 2, min score
   }
   scores.sodium = Math.min(Math.max(scores.sodium, 0), 25).toFixed(1);
-  scores.sodiumMgPerKcal = sodiumMgPerKcal.toFixed(2);
+  scores.sodiumMgPerKcal = sodiumNAFlag ? 'N/A' : sodiumMgPerKcal.toFixed(2);
 
   // Fiber (g/100g)
-  const fiberG = nutriments.fiber_100g || 0;
-  if (isZeroCalorie) {
+  const fiberG = nutriments.fiber_100g;
+  const fiberNAFlag = fiberG === undefined || fiberG === null;
+  const fiberValue = fiberNAFlag ? 0 : fiberG;
+  if (fiberNAFlag) {
+    scores.fiber = 0; // Score 0 for N/A
+  } else if (isZeroCalorie) {
     scores.fiber = 25; // No penalty for zero-calorie products
-  } else if (fiberG >= 3) {
+  } else if (fiberValue >= 3) {
     scores.fiber = 25;
   } else {
-    scores.fiber = 25 - (3 - fiberG) * (25 / 3);
+    scores.fiber = 25 - (3 - fiberValue) * (25 / 3);
   }
   scores.fiber = Math.min(Math.max(scores.fiber, 0), 25).toFixed(1);
 
   // Proteins (% energy)
-  const proteinsG = nutriments.proteins_100g || 0;
-  const proteinsKcal = proteinsG * 4; // 1g protein = 4 kcal
+  const proteinsG = nutriments.proteins_100g;
+  const proteinsNAFlag = proteinsG === undefined || proteinsG === null;
+  const proteinsValue = proteinsNAFlag ? 0 : proteinsG;
+  const proteinsKcal = proteinsValue * 4; // 1g protein = 4 kcal
   const proteinsPercentEnergy = totalKcal > 0 ? (proteinsKcal / totalKcal) * 100 : 0;
-  if (isZeroCalorie) {
+  if (proteinsNAFlag) {
+    scores.proteins = 0; // Score 0 for N/A
+  } else if (isZeroCalorie) {
     scores.proteins = 25; // No penalty for zero-calorie products
   } else if (proteinsPercentEnergy >= 10) {
     scores.proteins = 25;
@@ -87,21 +112,27 @@ function calculateNutrientScores(nutriments) {
     scores.proteins = 25 - (10 - proteinsPercentEnergy) * (5 / 2);
   }
   scores.proteins = Math.min(Math.max(scores.proteins, 0), 25).toFixed(1);
-  scores.proteinsPercentEnergy = proteinsPercentEnergy.toFixed(1);
+  scores.proteinsPercentEnergy = proteinsNAFlag ? 'N/A' : proteinsPercentEnergy.toFixed(1);
+
+  // Count N/A nutrients
+  const naCount = [sugarsNAFlag, satFatNAFlag, transFatNAFlag, sodiumNAFlag, fiberNAFlag, proteinsNAFlag].filter(Boolean).length;
 
   // Calculate average score and scale to 0-100
-  const averageScore = (parseFloat(scores.sugars) + parseFloat(scores.satFat) + parseFloat(scores.transFat) + parseFloat(scores.sodium) + parseFloat(scores.fiber) + parseFloat(scores.proteins)) / 6;
+  const scoreValues = [scores.sugars, scores.satFat, scores.transFat, scores.sodium, scores.fiber, scores.proteins]
+    .map(parseFloat);
+  
+  const averageScore = scoreValues.reduce((a, b) => a + b, 0) / 6;
   let totalScore = averageScore * 4;
 
   // Apply penalty for extremely high sugars
-  if (sugarsPercentEnergy > 20) {
+  if (!sugarsNAFlag && sugarsPercentEnergy > 20) {
     const sugarPenalty = (sugarsPercentEnergy - 20) * 0.5; // Reduce total score by 0.5 per % over 20%
     totalScore -= sugarPenalty;
   }
 
   totalScore = Math.min(Math.max(totalScore, 0), 100).toFixed(1);
 
-  return { scores, totalScore, totalKcal };
+  return { scores, totalScore, totalKcal, naCount };
 }
 
 // Get health rating based on total score (higher score = healthier, adjusted ranges)
@@ -133,7 +164,19 @@ function displayProductInfo(productInfo, product = null, error = null) {
   }
 
   const { nutriments, nutrition_grades, product_name } = product;
-  const { scores, totalScore, totalKcal } = calculateNutrientScores(nutriments || {});
+  const { scores, totalScore, totalKcal, naCount } = calculateNutrientScores(nutriments || {});
+
+  // Check if more than 3 nutrients are N/A
+  if (naCount > 3) {
+    productInfo.innerHTML = `
+      <h3>${sanitize(product_name || 'Unknown Product')}</h3>
+      <p style="color: red; font-weight: bold;" role="alert">Product not available - Insufficient nutrient information (${naCount} nutrients missing)</p>
+    `;
+    productInfo.setAttribute('role', 'region');
+    productInfo.setAttribute('aria-live', 'polite');
+    return;
+  }
+
   const { rating, color } = getHealthRating(totalScore);
 
   productInfo.innerHTML = `
